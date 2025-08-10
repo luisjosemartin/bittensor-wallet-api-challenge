@@ -9,38 +9,41 @@ import { RequestWithApiKey } from "#/types/Request/RequestWithApiKey";
 export class ApiKeyMiddleware {
   private readonly apiKeyService: ApiKeyService;
 
-  constructor(apiKeyService?: ApiKeyService) {
-    this.apiKeyService = apiKeyService || new ApiKeyService(new ApiKeyRepository());
+  constructor() {
+    this.apiKeyService = new ApiKeyService(new ApiKeyRepository());
   }
 
   public auth(requiredScopes?: ApiKeyScope[]) {
     return async (req: Request, res: Response, next: NextFunction) => {
       try {
         const apiKey = req.headers["x-api-key"];
-        
+
         if (!apiKey)
           return res.status(401).json({
-            error: "Authentication failed",
-            message: "API key is required"
+            success: false,
+            error: { code: "UNAUTHENTICATED", message: "Authentication failed" },
+            timestamp: new Date().toISOString()
           });
 
         const validatedApiKey = await this.apiKeyService.validateApiKey(apiKey.toString());
         
         if (!validatedApiKey)
           return res.status(401).json({
-            error: "Authentication failed",
-            message: "Could not validate API key"
+            success: false,
+            error: { code: "UNAUTHENTICATED", message: "Authentication failed" },
+            timestamp: new Date().toISOString()
           });
 
         if (requiredScopes && requiredScopes.length > 0) {
-          const hasRequiredScopes = requiredScopes.every(scope => 
+          const hasRequiredScopes = requiredScopes.every(scope =>
             validatedApiKey.scopes.includes(scope)
           );
 
           if (!hasRequiredScopes)
             return res.status(403).json({
-              error: "Insufficient permissions",
-              message: `This API key does not have the required scopes: ${requiredScopes.join(', ')}`,
+              success: false,
+              error: { code: "UNAUTHORIZED", message: `This API key does not have the required scopes: ${requiredScopes.join(', ')}` },
+              timestamp: new Date().toISOString()
             });
         }
 
@@ -48,8 +51,9 @@ export class ApiKeyMiddleware {
         next();
       } catch (error) {
         return res.status(500).json({
-          error: "Internal server error",
-          message: "Authentication service unavailable"
+          success: false,
+          error: { code: "INTERNAL_SERVER_ERROR", message: "Authentication service unavailable" },
+          timestamp: new Date().toISOString()
         });
       }
     };

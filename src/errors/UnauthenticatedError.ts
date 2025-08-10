@@ -1,7 +1,7 @@
 export class UnauthenticatedError extends Error {
-  constructor () {
+  constructor (message: string = "Authentication failed") {
     super(
-      "Authentication failed"
+      message
     )
     this.name = "UnauthenticatedError"
   }

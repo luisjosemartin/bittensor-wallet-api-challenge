@@ -5,6 +5,7 @@ import logger from "#/providers/Logger"
 import pinoHttp from 'pino-http'
 import { ClientErrorHandler } from "#/providers/Middlewares/ClientErrorHandler"
 import { HealthRouter } from "#/routes/HealthRouter"
+import { WalletRouter } from "#/routes/WalletRouter"
 const port = process.env.PORT ?? 3002
 
 class ExpressServer {
@@ -42,6 +43,7 @@ class ExpressServer {
     app: express.Application
   ) {
     new HealthRouter().inject(app)
+    new WalletRouter().inject(app)
   }
 
   public init () {

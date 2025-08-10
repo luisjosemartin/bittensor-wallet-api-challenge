@@ -16,29 +16,32 @@ export class ClientErrorHandler implements Middleware, Injectable {
       logger.error(`${err}`)
 
       if (err instanceof NotFoundError)
-        res.status(404).json({ error: err.message, })
+        res.status(404).json(
+        { success: false, error: { code: "NOT_FOUND", message: err.message }, timestamp: new Date().toISOString() })
 
       else if (
         err instanceof UnauthenticatedError ||
         err instanceof SessionExpiredError
       )
-        res.status(401).json({ error: err.message, })
+        res.status(401).json({ success: false, error: { code: "UNAUTHENTICATED", message: err.message }, timestamp: new Date().toISOString() })
 
       else if (err instanceof UnauthorizedError)
-        res.status(403).json({ error: err.message })
+        res.status(403).json({ success: false, error: { code: "UNAUTHORIZED", message: err.message }, timestamp: new Date().toISOString() })
 
       else if (err instanceof EntityConstraintError)
-        res.status(400).json({ error: err.message, })
+        res.status(400).json({ success: false, error: { code: "ENTITY_CONSTRAINT_ERROR", message: err.message }, timestamp: new Date().toISOString() })
 
       else if (PrismaClientError.isPrismaClientKnownRequestError(
         err
       ))
         res.status(400).json({
-          error: PrismaClientError.getErrorMessage(err),
+          success: false,
+          error: { code: "PRISMA_CLIENT_KNOWN_REQUEST_ERROR", message: PrismaClientError.getErrorMessage(err) },
+          timestamp: new Date().toISOString()
         })
 
       else
-        res.status(500).json({ error: "Unknown error", })
+        res.status(500).json({ success: false, error: { code: "INTERNAL_SERVER_ERROR", message: "Unknown error" }, timestamp: new Date().toISOString() })
     }
     else
       next()
