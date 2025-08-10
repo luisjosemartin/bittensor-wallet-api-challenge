@@ -13,12 +13,13 @@ export abstract class BaseRouter implements Injectable {
   }
 
   public inject (
-    app: express.Application
+    app: express.Application | express.Router
   ): void {
     logger.info(
       `[Routes] :: Injecting "${this.prefix}" API routes`
     )
-    app.use(this.prefix, this.router)
+    // Both Application and Router have the use method with the same signature
+    ;(app as express.Application).use(this.prefix, this.router)
   }
 
   /**

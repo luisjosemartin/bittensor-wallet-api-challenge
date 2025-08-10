@@ -6,6 +6,7 @@ import pinoHttp from 'pino-http'
 import { ClientErrorHandler } from "#/providers/Middlewares/ClientErrorHandler"
 import { HealthRouter } from "#/routes/HealthRouter"
 import { WalletRouter } from "#/routes/WalletRouter"
+import { SwaggerRouter } from "#/routes/SwaggerRouter"
 const port = process.env.PORT ?? 3002
 
 class ExpressServer {
@@ -42,8 +43,13 @@ class ExpressServer {
   private injectRoutes (
     app: express.Application
   ) {
-    new HealthRouter().inject(app)
-    new WalletRouter().inject(app)
+    // API routes with /api/v1 prefix
+    const apiRouter = express.Router()
+    new HealthRouter().inject(apiRouter)
+    new WalletRouter().inject(apiRouter)
+    new SwaggerRouter().inject(apiRouter)
+    
+    app.use('/api/v1', apiRouter)
   }
 
   public init () {
