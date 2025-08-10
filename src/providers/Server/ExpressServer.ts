@@ -1,11 +1,10 @@
 import express from "express"
 import "express-async-errors"
-import { engine } from "express-handlebars"
 import cors from "cors"
 import logger from "#/providers/Logger"
 import pinoHttp from 'pino-http'
 import { ClientErrorHandler } from "#/providers/Middlewares/ClientErrorHandler"
-import * as path from "node:path"
+import { HealthRouter } from "#/routes/HealthRouter"
 const port = process.env.PORT ?? 3002
 
 class ExpressServer {
@@ -13,7 +12,6 @@ class ExpressServer {
 
   constructor () {
     this.app = express()
-    // this.injectTemplateEngine(this.app)
     this.injectMiddlewares(this.app)
     this.injectRoutes(this.app)
     this.injectErrorHandlers(this.app)
@@ -31,16 +29,8 @@ class ExpressServer {
     }))
     app.use(express.json())
     app.use(cors())
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
   }
 
-  private injectTemplateEngine (
-    app: express.Application
-  ): void {
-    app.engine("handlebars", engine())
-    app.set("view engine", "handlebars")
-    app.set("views", path.join(__dirname, "../../", "emails"))
-  }
 
   private injectErrorHandlers (
     app: express.Application
@@ -49,10 +39,9 @@ class ExpressServer {
   }
 
   private injectRoutes (
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     app: express.Application
   ) {
-    // TODO: Inject routes
+    new HealthRouter().inject(app)
   }
 
   public init () {

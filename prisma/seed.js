@@ -1,25 +1,35 @@
 /* eslint-disable */
 const { PrismaClient } = require("@prisma/client");
-const { createCardPin } = require("../src/utils/cardGenerator");
+const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 
 const prisma = new PrismaClient();
 
+function generateRandomPart() {
+  const keyBytes = crypto.randomBytes(32);
+  return keyBytes.toString('base64url');
+}
+
 async function main() {
   console.log(`Start seeding ...`);
-  const company = await prisma.company.create({
-    data: {
-      name: "TestCO",
-    },
-  });
-  console.log(`Created company with id: ${company.id}`);
 
+  // Create a default API key for development/testing
+  const randomPart = generateRandomPart();
+  const keyHash = await bcrypt.hash(randomPart, 10);
   const apiKey = await prisma.apiKey.create({
     data: {
-      key: "test-api-key",
-      companyId: company.id,
+      keyHash: keyHash,
+      name: "Development API Key",
+      scopes: ["WALLET_READ", "WALLET_CREATE", "WALLET_TRANSFER"],
+      isActive: true,
     },
   });
-  console.log(`Created api key with id: ${apiKey.id}`);
+
+  const fullApiKey = `ak.${apiKey.id}.${randomPart}`;
+  console.log(`Created API Key with id: ${apiKey.id}`);
+  console.log(`Full API Key: ${fullApiKey}`);
+  console.log(`⚠️  Save this API key - it won't be shown again!`);
+
   console.log(`Seeding finished.`);
 }
 

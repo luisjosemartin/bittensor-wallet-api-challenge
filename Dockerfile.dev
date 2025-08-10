@@ -1,0 +1,36 @@
+# Use an alpine distribution to reduce the image size
+FROM node:20-alpine
+
+# Create a non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+ENV WORKDIR=/usr/src/app
+ENV NODE_ENV=development
+
+# Set working directory
+WORKDIR ${WORKDIR}
+
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma
+
+# Install all dependencies and generate Prisma client
+RUN npm install && \
+    npx prisma generate && \
+    npm cache clean --force
+
+# Copy source code
+COPY . ${WORKDIR}
+
+# Change ownership of the app directory to the nodejs user
+RUN chown -R nodejs:nodejs ${WORKDIR}
+
+# Switch to non-root user
+USER nodejs
+
+# Expose port
+EXPOSE 3002
+
+# Start the application
+CMD npm run dev

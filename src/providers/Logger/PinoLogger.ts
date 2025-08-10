@@ -6,6 +6,7 @@ export class PinoLogger implements Logger {
 
   constructor() {
     this.logger = pino({
+      enabled: process.env.NODE_ENV !== 'test',
       transport: process.env.NODE_ENV === 'development' 
         ? {
             target: 'pino-pretty',
