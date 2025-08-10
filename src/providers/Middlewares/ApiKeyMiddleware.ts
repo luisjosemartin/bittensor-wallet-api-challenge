@@ -48,7 +48,7 @@ export class ApiKeyMiddleware {
             validatedApiKey.scopes.includes(scope)
           );
 
-          if (!hasRequiredScopes)
+          if (!hasRequiredScopes) {
             await auditLogger.logApiKeyUsage(req, false, validatedApiKey.id, validatedApiKey.scopes, req.path);
 
             return res.status(403).json({
@@ -56,6 +56,7 @@ export class ApiKeyMiddleware {
               error: { code: "UNAUTHORIZED", message: `This API key does not have the required scopes: ${requiredScopes.join(', ')}` },
               timestamp: new Date().toISOString()
             });
+          }
         }
 
         (req as RequestWithApiKey).apiKey = validatedApiKey;

@@ -113,7 +113,7 @@ describe('AuditService', () => {
     it('should log successful API key usage', async () => {
       const metadata = { endpoint: '/wallets' };
       
-      await auditService.logApiKeyUsage(mockRequestWithApiKey, metadata);
+      await auditService.logApiKeyUsage(mockRequestWithApiKey, true, metadata);
 
       expect(mockCreate).toHaveBeenCalledWith({
         eventType: AuditLogEventType.API_KEY_USAGE,
@@ -125,8 +125,23 @@ describe('AuditService', () => {
       });
     });
 
+    it('should log failed API key usage', async () => {
+      const metadata = { reason: 'Invalid scope' };
+      
+      await auditService.logApiKeyUsage(mockRequestWithApiKey, false, metadata);
+
+      expect(mockCreate).toHaveBeenCalledWith({
+        eventType: AuditLogEventType.API_KEY_USAGE,
+        apiKeyId: 'api-key-123',
+        ipAddress: '192.168.1.1',
+        userAgent: 'test-agent',
+        success: false,
+        metadata,
+      });
+    });
+
     it('should log API key usage without metadata', async () => {
-      await auditService.logApiKeyUsage(mockRequestWithApiKey);
+      await auditService.logApiKeyUsage(mockRequestWithApiKey, true);
 
       expect(mockCreate).toHaveBeenCalledWith({
         eventType: AuditLogEventType.API_KEY_USAGE,
@@ -151,6 +166,51 @@ describe('AuditService', () => {
         userAgent: 'test-agent',
         success: false,
         metadata,
+      });
+    });
+  });
+
+  describe('logWalletRead', () => {
+    it('should log successful wallet read operation', async () => {
+      const metadata = { wallet_id: 'wallet-123', operation: 'balance_query' };
+      
+      await auditService.logWalletRead(mockRequestWithApiKey, true, metadata);
+
+      expect(mockCreate).toHaveBeenCalledWith({
+        eventType: AuditLogEventType.WALLET_READ,
+        apiKeyId: 'api-key-123',
+        ipAddress: '192.168.1.1',
+        userAgent: 'test-agent',
+        success: true,
+        metadata,
+      });
+    });
+
+    it('should log failed wallet read operation', async () => {
+      const metadata = { wallet_id: 'wallet-123', operation: 'balance_query', error: 'Wallet not found' };
+      
+      await auditService.logWalletRead(mockRequestWithApiKey, false, metadata);
+
+      expect(mockCreate).toHaveBeenCalledWith({
+        eventType: AuditLogEventType.WALLET_READ,
+        apiKeyId: 'api-key-123',
+        ipAddress: '192.168.1.1',
+        userAgent: 'test-agent',
+        success: false,
+        metadata,
+      });
+    });
+
+    it('should log wallet read without metadata', async () => {
+      await auditService.logWalletRead(mockRequestWithApiKey, true);
+
+      expect(mockCreate).toHaveBeenCalledWith({
+        eventType: AuditLogEventType.WALLET_READ,
+        apiKeyId: 'api-key-123',
+        ipAddress: '192.168.1.1',
+        userAgent: 'test-agent',
+        success: true,
+        metadata: undefined,
       });
     });
   });

@@ -83,7 +83,7 @@ describe('CryptoService', () => {
 
     it('should fail to decrypt with corrupted encrypted data', async () => {
       const encrypted = await cryptoService.encryptData(testData, testPassword);
-      const corruptedData = encrypted.encryptedData.replace(/.$/, '0'); // Change last character
+      const corruptedData = encrypted.encryptedData.replace(/.$/, '9r'); // Change last character
       
       expect(() =>
         cryptoService.decryptData(corruptedData, encrypted.salt, testPassword)
@@ -100,7 +100,7 @@ describe('CryptoService', () => {
 
     it('should fail to decrypt with corrupted salt', async () => {
       const encrypted = await cryptoService.encryptData(testData, testPassword);
-      const corruptedSalt = encrypted.salt.replace(/.$/, '0'); // Change last character
+      const corruptedSalt = encrypted.salt.replace(/.$/, '9r'); // Change last character
       
       expect(() =>
         cryptoService.decryptData(
@@ -202,7 +202,7 @@ describe('CryptoService', () => {
     it('should detect tampering with authentication tag', async () => {
       const encrypted = await cryptoService.encryptData(testData, testPassword);
       const parts = encrypted.encryptedData.split(':');
-      const corruptedAuthTag = parts[2].replace(/.$/, '0');
+      const corruptedAuthTag = parts[2].replace(/.$/, '9r');
       const tamperedData = `${parts[0]}:${parts[1]}:${corruptedAuthTag}`;
       
       expect(() =>
@@ -213,7 +213,7 @@ describe('CryptoService', () => {
     it('should detect tampering with encrypted data', async () => {
       const encrypted = await cryptoService.encryptData(testData, testPassword);
       const parts = encrypted.encryptedData.split(':');
-      const corruptedEncrypted = parts[1].replace(/.$/, '0');
+      const corruptedEncrypted = parts[1].replace(/.$/, '9r');
       const tamperedData = `${parts[0]}:${corruptedEncrypted}:${parts[2]}`;
       
       expect(() =>
