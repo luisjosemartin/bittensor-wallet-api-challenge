@@ -51,6 +51,9 @@ export const healthPaths = {
             }
           }
         },
+        '429': {
+          $ref: '#/components/responses/RateLimitError'
+        },
         '503': {
           description: 'Service is unavailable',
           content: {

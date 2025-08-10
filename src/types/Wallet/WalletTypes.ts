@@ -32,3 +32,22 @@ export interface StoredWallet {
   passwordHash: string;
   createdAt: Date;
 }
+
+// Balance-related types
+export interface WalletBalanceResponse {
+  success: true;
+  data: {
+    wallet_id: string;
+    balance: string;
+    currency: string;
+    last_updated: string;
+  };
+}
+
+export interface BalanceInfo {
+  free: string;
+  reserved: string;
+  symbol: string;
+  decimals: number;
+  nonce: number;
+}

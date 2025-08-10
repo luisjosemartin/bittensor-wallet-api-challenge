@@ -14,9 +14,6 @@ export class AuditLogger {
     this.logger = logger || defaultLogger;
   }
 
-  /**
-   * Convenience method for wallet creation events
-   */
   public async logWalletCreation(
     req: Request,
     success: boolean,
@@ -29,9 +26,6 @@ export class AuditLogger {
     });
   }
 
-  /**
-   * Convenience method for authentication failure events
-   */
   public async logAuthenticationFailure(
     req: Request,
     reason?: string,
@@ -43,30 +37,38 @@ export class AuditLogger {
     });
   }
 
-  /**
-   * Convenience method for API key usage events
-   */
   public async logApiKeyUsage(
     req: Request,
+    success: boolean,
     apiKeyId?: string,
     scopes?: ApiKeyScope[],
     endpoint?: string
   ): Promise<void> {
-    await this.logSecurityEvent(req, AuditLogEventType.API_KEY_USAGE, true, {
+    await this.logSecurityEvent(req, AuditLogEventType.API_KEY_USAGE, success, {
       api_key_id: apiKeyId || null,
       scopes: scopes?.join(',') || null,
       endpoint: endpoint || null,
     });
   }
 
-  /**
-   * Convenience method for rate limit exceeded events
-   */
   public async logRateLimitExceeded(
     req: Request,
     metadata?: Record<string, string | number | boolean | null>
   ): Promise<void> {
     await this.logSecurityEvent(req, AuditLogEventType.RATE_LIMIT_EXCEEDED, false, metadata);
+  }
+
+  public async logBalanceQuery(
+    req: Request,
+    success: boolean,
+    walletId?: string,
+    error?: string
+  ): Promise<void> {
+    await this.logSecurityEvent(req, AuditLogEventType.WALLET_READ, success, {
+      wallet_id: walletId || null,
+      operation: 'balance_query',
+      error: error || null,
+    });
   }
 
   private async logSecurityEvent(
@@ -81,12 +83,14 @@ export class AuditLogger {
           await this.auditService.logWalletCreation(req, success, metadata);
           break;
         case AuditLogEventType.API_KEY_USAGE:
-          await this.auditService.logApiKeyUsage(req, metadata);
+          await this.auditService.logApiKeyUsage(req, success, metadata);
           break;
         case AuditLogEventType.RATE_LIMIT_EXCEEDED:
           await this.auditService.logRateLimitExceeded(req, metadata);
           break;
         case AuditLogEventType.WALLET_READ:
+          await this.auditService.logWalletRead(req, success, metadata);
+          break;
         case AuditLogEventType.WALLET_TRANSFER:
         default:
           throw new Error(`Unknown event type: ${eventType}`);

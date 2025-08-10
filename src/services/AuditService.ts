@@ -11,9 +11,6 @@ export class AuditService {
     this.auditRepository = auditRepository;
   }
 
-  /**
-   * Log a wallet creation attempt
-   */
   public async logWalletCreation(
     req: Request,
     success: boolean,
@@ -26,9 +23,6 @@ export class AuditService {
     });
   }
 
-  /**
-   * Log an authentication failure
-   */
   public async logAuthenticationFailure(
     req: Request,
     metadata?: { reason?: string; api_key_partial?: string }
@@ -40,23 +34,18 @@ export class AuditService {
     });
   }
 
-  /**
-   * Log successful API key usage
-   */
   public async logApiKeyUsage(
     req: Request,
+    success: boolean,
     metadata?: Record<string, string | number | boolean | null>
   ): Promise<AuditLogResponse> {
     return await this.createAuditLog(req, {
       eventType: AuditLogEventType.API_KEY_USAGE,
-      success: true,
+      success,
       metadata,
     });
   }
 
-  /**
-   * Log a rate limit exceeded event
-   */
   public async logRateLimitExceeded(
     req: Request,
     metadata?: Record<string, string | number | boolean | null>
@@ -64,6 +53,18 @@ export class AuditService {
     return await this.createAuditLog(req, {
       eventType: AuditLogEventType.RATE_LIMIT_EXCEEDED,
       success: false,
+      metadata,
+    });
+  }
+
+  public async logWalletRead(
+    req: Request,
+    success: boolean,
+    metadata?: Record<string, string | number | boolean | null>
+  ): Promise<AuditLogResponse> {
+    return await this.createAuditLog(req, {
+      eventType: AuditLogEventType.WALLET_READ,
+      success,
       metadata,
     });
   }

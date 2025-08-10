@@ -5,6 +5,7 @@ import { walletSchemas } from './schemas/Wallet';
 import { healthSchemas } from './schemas/Health';
 import { errorSchemas } from './schemas/Error';
 import { apiKeySchemas } from './schemas/ApiKey';
+import { walletBalanceResponseSchema } from './schemas/WalletBalance';
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -40,7 +41,8 @@ const options: swaggerJsdoc.Options = {
         ...walletSchemas,
         ...healthSchemas,
         ...errorSchemas,
-        ...apiKeySchemas
+        ...apiKeySchemas,
+        ...walletBalanceResponseSchema
       },
       securitySchemes: {
         ApiKeyAuth: {
@@ -107,6 +109,52 @@ const options: swaggerJsdoc.Options = {
                   details: {}
                 },
                 timestamp: '2024-01-01T00:00:00Z'
+              }
+            }
+          }
+        },
+        RateLimitError: {
+          description: 'Rate limit exceeded',
+          headers: {
+            'X-RateLimit-Limit': {
+              description: 'Request limit per time window',
+              schema: { type: 'integer', example: 100 }
+            },
+            'X-RateLimit-Remaining': {
+              description: 'Remaining requests in current window',
+              schema: { type: 'integer', example: 0 }
+            },
+            'X-RateLimit-Reset': {
+              description: 'Time when rate limit resets',
+              schema: { type: 'string', format: 'date-time', example: '2024-01-01T13:00:00Z' }
+            },
+            'X-RateLimit-Window': {
+              description: 'Rate limit window in seconds',
+              schema: { type: 'integer', example: 3600 }
+            },
+            'Retry-After': {
+              description: 'Seconds to wait before retrying',
+              schema: { type: 'integer', example: 1800 }
+            }
+          },
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+              },
+              example: {
+                success: false,
+                error: {
+                  code: 'RATE_LIMITED',
+                  message: 'Too many requests',
+                  details: {
+                    limit: 100,
+                    window: '3600 seconds',
+                    reset_time: '2024-01-01T13:00:00Z',
+                    retry_after: 1800
+                  }
+                },
+                timestamp: '2024-01-01T12:30:00Z'
               }
             }
           }

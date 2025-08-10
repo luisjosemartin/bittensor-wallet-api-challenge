@@ -32,5 +32,17 @@ export class WalletRouter extends BaseRouter {
       this.walletValidator.getValidators("createWallet"),
       this.walletController.createWallet
     );
+
+    // GET /wallets/:id/balance - Get wallet balance
+    this.router.get(
+      "/:id/balance",
+      // Rate limit by API key (user): 100 requests per minute per user as specified in requirements
+      rateLimitMiddleware.createUserLimiter('balance-check-user', rateLimitConfigs.balanceCheck),
+      this.inputSanitizerMiddleware.sanitizeAll(),
+      this.apiKeyValidator.getValidators(),
+      this.apiKeyMiddleware.auth([ApiKeyScope.WALLET_READ]),
+      this.walletValidator.getValidators("walletIdParam"),
+      this.walletController.getWalletBalance
+    );
   }
 }

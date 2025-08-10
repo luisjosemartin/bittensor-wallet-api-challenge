@@ -7,6 +7,17 @@ export class PinoLogger implements Logger {
   constructor() {
     this.logger = pino({
       enabled: process.env.NODE_ENV !== 'test',
+      redact: {
+        paths: [
+          'req.headers["x-api-key"]',
+          'headers["x-api-key"]',
+          'apiKey',
+          'password',
+          'authorization',
+          'req.headers.authorization'
+        ],
+        censor: '[REDACTED]'
+      },
       transport: process.env.NODE_ENV === 'development' 
         ? {
             target: 'pino-pretty',

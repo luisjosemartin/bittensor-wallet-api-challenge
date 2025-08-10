@@ -1,4 +1,8 @@
-import { body, ValidationChain } from "express-validator";
+import { 
+  body, 
+  param, 
+  ValidationChain
+} from "express-validator";
 import { BaseValidator } from "#/validators/BaseValidator";
 
 export class WalletValidator extends BaseValidator {
@@ -6,8 +10,8 @@ export class WalletValidator extends BaseValidator {
     switch (methodName) {
       case "createWallet":
         return this.createWallet();
-      case "walletId":
-        return this.walletId();
+      case "walletIdParam":
+        return this.walletIdParam();
       default:
         return [];
     }
@@ -32,11 +36,13 @@ export class WalletValidator extends BaseValidator {
     ];
   }
 
-  private walletId(): ValidationChain[] {
+  private walletIdParam(): ValidationChain[] {
     return [
-      body('walletId')
+      param('id')
         .isUUID()
         .withMessage('Wallet ID must be a valid UUID')
+        .notEmpty()
+        .withMessage('Wallet ID is required')
     ];
   }
 }

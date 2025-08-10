@@ -32,4 +32,22 @@ export class WalletController {
       throw error;
     }
   };
+
+  /**
+   * GET /wallets/:id/balance
+   */
+  public getWalletBalance = async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    try {
+      const balanceResponse = await this.walletService.getWalletBalance(id);
+      await auditLogger.logBalanceQuery(req, true, id);
+
+      res.status(200).json(balanceResponse);
+    } catch (error) {
+      await auditLogger.logBalanceQuery(req, false, id, error instanceof Error ? error.message : 'Unknown error');
+
+      throw error;
+    }
+  };
 }

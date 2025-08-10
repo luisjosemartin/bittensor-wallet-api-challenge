@@ -5,25 +5,36 @@ import {
   WalletKeypair,
   EncryptedWalletData,
   CreateWalletRequest,
-  CreateWalletResponse
+  CreateWalletResponse,
+  WalletBalanceResponse
 } from '#/types/Wallet/WalletTypes';
 import { WalletRepository } from '#/repositories/WalletRepository';
 import { CryptoService } from '#/services/CryptoService';
+import { BittensorBalanceService } from '#/services/BittensorBalanceService';
+import { NotFoundError } from '#/errors/NotFoundError';
+import { EntityConstraintError } from '#/errors/EntityConstraintError';
+import { ServiceUnavailableError } from '#/errors/ServiceUnavailableError';
 
 export class WalletService {
   private readonly walletRepository: WalletRepository;
   private readonly cryptoService: CryptoService;
+  private readonly bitensorBalanceService: BittensorBalanceService;
 
-  constructor(walletRepository = new WalletRepository(), cryptoService = new CryptoService()) {
+  constructor(
+    walletRepository = new WalletRepository(), 
+    cryptoService = new CryptoService(),
+    bitensorBalanceService = new BittensorBalanceService()
+  ) {
     this.walletRepository = walletRepository;
     this.cryptoService = cryptoService;
+    this.bitensorBalanceService = bitensorBalanceService;
   }
 
   /**
    * Generate a new Bittensor keypair in SS58 format
    */
   public async generateKeypair(): Promise<WalletKeypair> {
-    // Not sure this is the correct approach TBH
+    // Not sure this is the correct approach
     await cryptoWaitReady();
     const keyring = new Keyring({ type: 'sr25519', ss58Format: 42 });
     const seed = randomBytes(32);
@@ -69,6 +80,34 @@ export class WalletService {
         wallet_id: wallet.id,
         public_address: wallet.publicAddress,
         created_at: wallet.createdAt.toISOString()
+      }
+    };
+  }
+
+  /**
+   * Get wallet balance from Bittensor network
+   */
+  public async getWalletBalance(walletId: string): Promise<WalletBalanceResponse> {
+    // Find wallet in database
+    const wallet = await this.walletRepository.findById(walletId);
+    if (!wallet) throw new NotFoundError(`Wallet with ID ${walletId}`);
+    
+    if (!this.bitensorBalanceService.validateAddress(wallet.publicAddress))
+      throw new EntityConstraintError('Address', `Invalid format: ${wallet.publicAddress}`);
+
+    const isHealthy = await this.bitensorBalanceService.isNetworkHealthy();
+    if (!isHealthy) 
+      throw new ServiceUnavailableError('Bittensor network is currently unavailable');
+
+    const balanceInfo = await this.bitensorBalanceService.fetchBalance(wallet.publicAddress);
+    
+    return {
+      success: true,
+      data: {
+        wallet_id: walletId,
+        balance: balanceInfo.free,
+        currency: balanceInfo.symbol,
+        last_updated: new Date().toISOString()
       }
     };
   }

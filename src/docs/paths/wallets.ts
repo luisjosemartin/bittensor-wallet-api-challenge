@@ -84,29 +84,93 @@ export const walletPaths = {
           $ref: '#/components/responses/UnauthorizedError'
         },
         '429': {
-          description: 'Rate limit exceeded',
-          headers: {
-            'X-RateLimit-Limit': {
-              description: 'Request limit per time window',
-              schema: { type: 'integer', example: 5 }
-            },
-            'X-RateLimit-Remaining': {
-              description: 'Remaining requests in current window',
-              schema: { type: 'integer', example: 0 }
-            },
-            'X-RateLimit-Reset': {
-              description: 'Time when rate limit resets',
-              schema: { type: 'string', format: 'date-time' }
-            },
-            'X-RateLimit-Window': {
-              description: 'Rate limit window in seconds',
-              schema: { type: 'integer', example: 3600 }
-            },
-            'Retry-After': {
-              description: 'Seconds to wait before retrying',
-              schema: { type: 'integer', example: 1800 }
+          $ref: '#/components/responses/RateLimitError'
+        },
+        '500': {
+          $ref: '#/components/responses/InternalServerError'
+        }
+      }
+    }
+  },
+  '/wallets/{id}/balance': {
+    get: {
+      tags: ['Wallets'],
+      summary: 'Get Wallet Balance',
+      description: `
+        Retrieves the current TAO balance for a specific wallet from the Bittensor network.
+        
+        Features
+        - Network health checking before queries
+        - Comprehensive error handling for network issues
+        
+        Requirements
+        - Valid API key with WALLET_READ scope
+        - Valid wallet UUID in path parameter
+
+        Network Dependencies
+        - Returns 503 if all network endpoints are unavailable
+      `,
+      operationId: 'getWalletBalance',
+      security: [
+        {
+          ApiKeyAuth: []
+        }
+      ],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          description: 'Wallet UUID',
+          schema: {
+            type: 'string',
+            format: 'uuid',
+            example: '550e8400-e29b-41d4-a716-446655440000'
+          }
+        }
+      ],
+      responses: {
+        '200': {
+          description: 'Balance retrieved successfully',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/WalletBalanceResponse'
+              },
+              examples: {
+                success: {
+                  summary: 'Successful balance query',
+                  value: {
+                    success: true,
+                    data: {
+                      wallet_id: '550e8400-e29b-41d4-a716-446655440000',
+                      balance: '1000.500000000',
+                      currency: 'TAO',
+                      last_updated: '2024-01-01T12:00:00Z'
+                    }
+                  }
+                },
+                zeroBalance: {
+                  summary: 'Wallet with zero balance',
+                  value: {
+                    success: true,
+                    data: {
+                      wallet_id: '550e8400-e29b-41d4-a716-446655440000',
+                      balance: '0.000000000',
+                      currency: 'TAO',
+                      last_updated: '2024-01-01T12:00:00Z'
+                    }
+                  }
+                }
+              }
             }
-          },
+          }
+        },
+        '401': {
+          $ref: '#/components/responses/UnauthorizedError'
+        },
+        '404': {
+          description: 'Wallet not found',
           content: {
             'application/json': {
               schema: {
@@ -115,16 +179,39 @@ export const walletPaths = {
               example: {
                 success: false,
                 error: {
-                  code: 'RATE_LIMITED',
-                  message: 'Too many requests',
+                  code: 'WALLET_NOT_FOUND',
+                  message: 'Wallet with ID 550e8400-e29b-41d4-a716-446655440000 not found',
                   details: {
-                    limit: 5,
-                    window: '3600 seconds',
-                    reset_time: '2024-01-01T13:00:00Z',
-                    retry_after: 1800
+                    wallet_id: '550e8400-e29b-41d4-a716-446655440000'
                   }
                 },
-                timestamp: '2024-01-01T12:30:00Z'
+                timestamp: '2024-01-01T12:00:00Z'
+              }
+            }
+          }
+        },
+        '429': {
+          $ref: '#/components/responses/RateLimitError'
+        },
+        '503': {
+          description: 'Bittensor network unavailable',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+              },
+              example: {
+                success: false,
+                error: {
+                  code: 'NETWORK_UNAVAILABLE',
+                  message: 'Bittensor network is currently unavailable',
+                  details: {
+                    service: 'bittensor_rpc',
+                    status: 'unhealthy',
+                    last_check: '2024-01-01T12:00:00Z'
+                  }
+                },
+                timestamp: '2024-01-01T12:00:00Z'
               }
             }
           }

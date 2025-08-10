@@ -4,6 +4,7 @@ Request,
 Response,
 NextFunction
 } from 'express';
+import { RequestWithApiKey } from '#/types/Request/RequestWithApiKey';
 import logger from '#/providers/Logger';
 import { auditLogger } from '../Logger/AuditLogger';
 
@@ -63,20 +64,20 @@ export class RateLimitMiddleware {
               retry_after: secs
             }
 
-        auditLogger.logRateLimitExceeded(req, {
-          error: 'Rate limit exceeded',
-          ...details
-        }).catch(err => { logger.error('Failed to log rate limit exceeded: ' + err); });
+            auditLogger.logRateLimitExceeded(req, {
+              error: 'Rate limit exceeded',
+              ...details
+            }).catch(err => { logger.error('Failed to log rate limit exceeded: ' + err); });
 
-        res.status(429).json({
-          success: false,
-          error: {
-            code: 'RATE_LIMITED',
-            message: 'Too many requests',
-            details
-          },
-          timestamp: new Date().toISOString()
-        });
+            res.status(429).json({
+              success: false,
+              error: {
+                code: 'RATE_LIMITED',
+                message: 'Too many requests',
+                details
+              },
+              timestamp: new Date().toISOString()
+            });
           });
       } catch (error) {
         logger.error(`[RateLimit] ${name}: Unexpected error: ${error}`);
@@ -122,14 +123,24 @@ export class RateLimitMiddleware {
     });
   }
 
-  // Not used for now
+  /**
+   * Creates a rate limiter that limits by API key (user) instead of IP.
+   * This is used for endpoints that need per-user rate limiting like balance checks.
+   */
   public createUserLimiter(name: string, config: RateLimitConfig) {
     const userConfig = {
       ...config,
       keyGenerator: (req: Request) => {
-        // Use API key for user-specific limiting
-        const apiKey = req.headers['x-api-key'] as string;
-        return apiKey ? `user:${apiKey}` : this.getClientKey(req);
+        // Use API key ID for user-specific limiting as we don't have a user model (after ApiKeyMiddleware runs)
+        const reqWithApiKey = req as RequestWithApiKey;
+        const apiKeyId = reqWithApiKey.apiKey?.id;
+        
+        if (apiKeyId) return `user:${apiKeyId}`;
+        // Fallback to header-based API key if apiKey object not set yet
+        const apiKeyHeader = req.headers['x-api-key'] as string;
+        if (apiKeyHeader) return `user:${apiKeyHeader}`;
+        // Final fallback to IP (shouldn't happen after authentication)
+        return this.getClientKey(req);
       }
     };
 
