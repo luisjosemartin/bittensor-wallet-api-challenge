@@ -19,6 +19,8 @@ import { WalletService } from '#/services/WalletService';
 import { resetDb } from '#/__tests__/helpers/reset-db';
 import { createApiKeyWithKnownRandomPart } from '#/__tests__/factories/ApiKeyFactory';
 import { CreateWalletRequest } from '#/types/Wallet/WalletTypes';
+import { db } from '#/providers/Database/PrismaClient';
+import { AuditLogEventType } from '@prisma/client';
 
 // FIX ME: CAN BE IMPROVED A LOT!
 describe('WalletController - POST /wallets', () => {
@@ -390,5 +392,45 @@ describe('WalletController - POST /wallets', () => {
       expect(response.body.success).toBe(false);
       expect(response.body.error.code).toBe("UNAUTHENTICATED");
     });
+  });
+
+  describe('Audit Logging Tests', () => {
+    // IMPROVEMENT: Have a way to not log while testing (with an environment variable)
+    // Here we would set the environment variable to true
+
+    it('should log successful wallet creation', async () => {
+      const validInput = {
+        password: "SecurePassword123!",
+        name: "Test Wallet"
+      };
+
+      await request(app)
+        .post('/wallets')
+        .set('x-api-key', validApiKey)
+        .send(validInput)
+        .expect(201);
+
+      const auditLog = await db.auditLog.findFirst({
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+      const wallet = await db.wallet.findFirst({
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+      expect(auditLog).toBeDefined();
+      expect(auditLog!.eventType).toBe(AuditLogEventType.WALLET_CREATION);
+      expect(auditLog!.success).toBe(true);
+      expect(auditLog!.metadata).toEqual({
+        error: null,
+        wallet_id: wallet!.id
+      });
+    });
+
+    // TODO: Implement this test
+    // it('should log failed wallet creation', async () => {
+    // });
   });
 });

@@ -36,3 +36,28 @@ enum ApiKeyScope {
   WALLET_CREATE
   WALLET_TRANSFER
 }
+
+model AuditLog {
+  id        String            @id @default(uuid())
+  timestamp DateTime          @default(now())
+  eventType AuditLogEventType
+  // userId     String?
+  apiKeyId  String? // We don't have a user model so lets use the api key id for now.
+  ipAddress String
+  userAgent String
+  success   Boolean
+  metadata  Json?
+  createdAt DateTime          @default(now())
+
+  @@index([eventType])
+  @@index([timestamp])
+  @@index([apiKeyId])
+}
+
+enum AuditLogEventType {
+  WALLET_CREATION
+  WALLET_READ
+  WALLET_TRANSFER
+  API_KEY_USAGE
+  RATE_LIMIT_EXCEEDED
+}

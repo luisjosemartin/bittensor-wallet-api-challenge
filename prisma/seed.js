@@ -1,5 +1,5 @@
 /* eslint-disable */
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient, ApiKeyScope } = require("@prisma/client");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 
@@ -20,7 +20,7 @@ async function main() {
     data: {
       keyHash: keyHash,
       name: "Development API Key",
-      scopes: ["WALLET_READ", "WALLET_CREATE", "WALLET_TRANSFER"],
+      scopes: Object.values(ApiKeyScope),
       isActive: true,
     },
   });

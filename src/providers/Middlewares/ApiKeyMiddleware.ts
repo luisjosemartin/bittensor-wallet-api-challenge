@@ -5,6 +5,7 @@ import { ApiKeyService } from "#/services/ApiKeyService";
 import { ApiKeyRepository } from "#/repositories/ApiKeyRepository";
 import { ApiKeyScope } from "#/types/ApiKey/ApiKeyTypes";
 import { RequestWithApiKey } from "#/types/Request/RequestWithApiKey";
+import { auditLogger } from "#/providers/Logger/AuditLogger";
 
 export class ApiKeyMiddleware {
   private readonly apiKeyService: ApiKeyService;
@@ -18,21 +19,30 @@ export class ApiKeyMiddleware {
       try {
         const apiKey = req.headers["x-api-key"];
 
-        if (!apiKey)
+        if (!apiKey) {
+          // Log authentication failure - missing API key
+          await auditLogger.logAuthenticationFailure(req, 'Missing API key');
+          
           return res.status(401).json({
             success: false,
             error: { code: "UNAUTHENTICATED", message: "Authentication failed" },
             timestamp: new Date().toISOString()
           });
+        }
 
         const validatedApiKey = await this.apiKeyService.validateApiKey(apiKey.toString());
         
-        if (!validatedApiKey)
+        if (!validatedApiKey) {
+          // Log authentication failure - invalid API key
+          const apiKeyPartial = apiKey.toString().substring(0, 8) + '...';
+          await auditLogger.logAuthenticationFailure(req, 'Invalid API key', apiKeyPartial);
+          
           return res.status(401).json({
             success: false,
             error: { code: "UNAUTHENTICATED", message: "Authentication failed" },
             timestamp: new Date().toISOString()
           });
+        }
 
         if (requiredScopes && requiredScopes.length > 0) {
           const hasRequiredScopes = requiredScopes.every(scope =>
@@ -48,6 +58,15 @@ export class ApiKeyMiddleware {
         }
 
         (req as RequestWithApiKey).apiKey = validatedApiKey;
+        
+        // Log successful API key usage
+        await auditLogger.logApiKeyUsage(
+          req,
+          validatedApiKey.id,
+          validatedApiKey.scopes,
+          req.path
+        );
+        
         next();
       } catch (error) {
         return res.status(500).json({
