@@ -1,0 +1,11 @@
+node_modules
+dist
+*.env*
+*.db
+.idea
+.vscode
+.DS_Store
+coverage
+
+# Ignore all HTML files in the src/emails directory
+src/emails/**/*.html
