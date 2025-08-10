@@ -55,6 +55,20 @@ export class AuditService {
   }
 
   /**
+   * Log a rate limit exceeded event
+   */
+  public async logRateLimitExceeded(
+    req: Request,
+    metadata?: Record<string, string | number | boolean | null>
+  ): Promise<AuditLogResponse> {
+    return await this.createAuditLog(req, {
+      eventType: AuditLogEventType.RATE_LIMIT_EXCEEDED,
+      success: false,
+      metadata,
+    });
+  }
+
+  /**
    * Generic method to create audit log entries
    * 
    * IMPROVEMENT: Have a way to not log while testing (with an environment variable)
@@ -66,6 +80,7 @@ export class AuditService {
       eventType: AuditLogEventType;
       success: boolean;
       metadata?: Record<string, string | number | boolean | null>;
+      error?: string;
     }
   ): Promise<AuditLogResponse> {
     const auditData: CreateAuditLogRequest = {
@@ -80,9 +95,8 @@ export class AuditService {
     return await this.auditRepository.create(auditData);
   }
 
-  private extractApiKeyId(req: Request): string {
-    const reqWithApiKey = req as RequestWithApiKey;
-    return reqWithApiKey.apiKey.id;
+  private extractApiKeyId(req: RequestWithApiKey): string {
+    return req.apiKey?.id || (req.headers['x-api-key'] as string);
   }
 
   private extractIpAddress(req: Request): string {

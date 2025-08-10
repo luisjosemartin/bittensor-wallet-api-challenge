@@ -59,6 +59,16 @@ export class AuditLogger {
     });
   }
 
+  /**
+   * Convenience method for rate limit exceeded events
+   */
+  public async logRateLimitExceeded(
+    req: Request,
+    metadata?: Record<string, string | number | boolean | null>
+  ): Promise<void> {
+    await this.logSecurityEvent(req, AuditLogEventType.RATE_LIMIT_EXCEEDED, false, metadata);
+  }
+
   private async logSecurityEvent(
     req: Request,
     eventType: AuditLogEventType,
@@ -73,14 +83,17 @@ export class AuditLogger {
         case AuditLogEventType.API_KEY_USAGE:
           await this.auditService.logApiKeyUsage(req, metadata);
           break;
+        case AuditLogEventType.RATE_LIMIT_EXCEEDED:
+          await this.auditService.logRateLimitExceeded(req, metadata);
+          break;
         case AuditLogEventType.WALLET_READ:
         case AuditLogEventType.WALLET_TRANSFER:
-        case AuditLogEventType.RATE_LIMIT_EXCEEDED:
         default:
           throw new Error(`Unknown event type: ${eventType}`);
       }
     } catch (error) {
       this.logger.error(`Failed to log security event`);
+      this.logger.error(error as string);
     }
   }
 }

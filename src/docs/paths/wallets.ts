@@ -85,6 +85,28 @@ export const walletPaths = {
         },
         '429': {
           description: 'Rate limit exceeded',
+          headers: {
+            'X-RateLimit-Limit': {
+              description: 'Request limit per time window',
+              schema: { type: 'integer', example: 5 }
+            },
+            'X-RateLimit-Remaining': {
+              description: 'Remaining requests in current window',
+              schema: { type: 'integer', example: 0 }
+            },
+            'X-RateLimit-Reset': {
+              description: 'Time when rate limit resets',
+              schema: { type: 'string', format: 'date-time' }
+            },
+            'X-RateLimit-Window': {
+              description: 'Rate limit window in seconds',
+              schema: { type: 'integer', example: 3600 }
+            },
+            'Retry-After': {
+              description: 'Seconds to wait before retrying',
+              schema: { type: 'integer', example: 1800 }
+            }
+          },
           content: {
             'application/json': {
               schema: {
@@ -94,11 +116,12 @@ export const walletPaths = {
                 success: false,
                 error: {
                   code: 'RATE_LIMITED',
-                  message: 'Too many wallet creation requests',
+                  message: 'Too many requests',
                   details: {
                     limit: 5,
-                    window: '1 hour',
-                    reset_time: '2024-01-01T13:00:00Z'
+                    window: '3600 seconds',
+                    reset_time: '2024-01-01T13:00:00Z',
+                    retry_after: 1800
                   }
                 },
                 timestamp: '2024-01-01T12:30:00Z'

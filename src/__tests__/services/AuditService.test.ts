@@ -139,6 +139,22 @@ describe('AuditService', () => {
     });
   });
 
+  describe('logRateLimitExceeded', () => {
+    it('should log rate limit exceeded', async () => {
+      const metadata = { error: 'Rate limit exceeded' };
+      await auditService.logRateLimitExceeded(mockRequestWithApiKey, metadata);
+
+      expect(mockCreate).toHaveBeenCalledWith({
+        eventType: AuditLogEventType.RATE_LIMIT_EXCEEDED,
+        apiKeyId: 'api-key-123',
+        ipAddress: '192.168.1.1',
+        userAgent: 'test-agent',
+        success: false,
+        metadata,
+      });
+    });
+  });
+
   describe('createAuditLog', () => {
     it('should create audit log with correct data', async () => {
       const params = {

@@ -6,6 +6,8 @@ import { BaseRouter } from "#/routes/BaseRouter";
 import { ApiKeyScope } from "#/types/ApiKey/ApiKeyTypes";
 import { ApiKeyValidator } from "#/validators/ApiKeyValidator";
 import { InputSanitizerMiddleware } from "#/providers/Middlewares/InputSanitizerMiddleware";
+import { rateLimitMiddleware } from "#/providers/Middlewares/RateLimitMiddleware";
+import { rateLimitConfigs } from "#/config/rateLimits";
 
 export class WalletRouter extends BaseRouter {
   private readonly walletController = new WalletController();
@@ -23,6 +25,7 @@ export class WalletRouter extends BaseRouter {
     // POST /wallets - Create new wallet
     this.router.post(
       "/",
+      rateLimitMiddleware.middleware('wallet-creation', rateLimitConfigs.walletCreation),
       this.inputSanitizerMiddleware.sanitizeAll(),
       this.apiKeyValidator.getValidators(),
       this.apiKeyMiddleware.auth([ApiKeyScope.WALLET_CREATE]),

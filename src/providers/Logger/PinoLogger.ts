@@ -25,6 +25,10 @@ export class PinoLogger implements Logger {
     this.logger.info(message)
   }
 
+  public debug = (message: string): void => {
+    this.logger.debug(message)
+  }
+
   public warn = (message: string): void => {
     this.logger.warn(message)
   }
@@ -32,4 +36,4 @@ export class PinoLogger implements Logger {
   public error = (message: string): void => {
     this.logger.error(message)
   }
-} 
+}

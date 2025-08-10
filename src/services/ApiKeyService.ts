@@ -11,11 +11,7 @@ import logger from "#/providers/Logger";
 import { ApiKeyRepository } from "#/repositories/ApiKeyRepository";
 
 export class ApiKeyService {
-  private apiKeyRepository: ApiKeyRepository;
-
-  constructor(apiKeyRepository: ApiKeyRepository) {
-    this.apiKeyRepository = apiKeyRepository;
-  }
+  private apiKeyRepository = new ApiKeyRepository();
 
   private generateRandomPart(): string {
     const keyBytes = randomBytes(32);

@@ -2,7 +2,6 @@ import { NextFunction } from "express";
 import { Request } from "#/types/Request";
 import { Response } from "#/types/Response";
 import { ApiKeyService } from "#/services/ApiKeyService";
-import { ApiKeyRepository } from "#/repositories/ApiKeyRepository";
 import { ApiKeyScope } from "#/types/ApiKey/ApiKeyTypes";
 import { RequestWithApiKey } from "#/types/Request/RequestWithApiKey";
 import { auditLogger } from "#/providers/Logger/AuditLogger";
@@ -11,7 +10,7 @@ export class ApiKeyMiddleware {
   private readonly apiKeyService: ApiKeyService;
 
   constructor() {
-    this.apiKeyService = new ApiKeyService(new ApiKeyRepository());
+    this.apiKeyService = new ApiKeyService();
   }
 
   public auth(requiredScopes?: ApiKeyScope[]) {

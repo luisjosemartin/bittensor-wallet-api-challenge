@@ -16,7 +16,7 @@ describe("ApiKeyService", () => {
 
   beforeEach(() => {
     repository = new ApiKeyRepository();
-    service = new ApiKeyService(repository);
+    service = new ApiKeyService();
   });
 
   describe("createApiKey", () => {
